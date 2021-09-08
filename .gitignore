@@ -1,3 +1,9 @@
+# env
+.pygraph_env
+
+# jetbrains
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

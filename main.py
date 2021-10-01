@@ -1,30 +1,24 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
-import sys
-from message import log, success, error
+"""
+File: main.py
+Author: Luke Mason
 
-SW, SH = 1920, 1080
-X, Y, W, H = 100, 100, SW-200, SH-200
+Description: Inits Window object with global screen definition variables.
+"""
+from window import Window
+
+SCREEN_WIDTH: int = 1920
+SCREEN_HEIGHT: int = 1080
+WIDTH: int = 800
+HEIGHT: int = 900
 
 
-def main():
+def main() -> None:
     """
-    Application entrypoint
-    """
-    window()
+	Application entrypoint
+	"""
+    win = Window(w=WIDTH, h=HEIGHT, sw=SCREEN_WIDTH, sh=SCREEN_HEIGHT)
 
-
-def window():
-    """
-    Builds the main window
-    """
-    app = QApplication(sys.argv)  # pass some info to pyqt
-    win = QMainWindow()  # Build window
-    win.setGeometry(X, Y, W, H)
-    win.setWindowTitle('PyGraph')
-
-    win.show()  # Show window
-    sys.exit(app.exec_())
+    win.display()
 
 
 if __name__ == '__main__':

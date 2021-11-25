@@ -4,32 +4,44 @@ Author: Luke Mason
 
 Description: Inits Window object with global screen definition variables.
 """
-from message import error
-from settings import APP_NAME
-from window import Window
 from message import log
-from PyQt5.QtWidgets import QApplication
+from settings import APP_NAME, BLACK
 
-import sys
+import sys, pygame
+pygame.init()
 
 SCREEN_WIDTH: int = 1920
 SCREEN_HEIGHT: int = 1080
 WIDTH: int = 800
 HEIGHT: int = 900
 
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+
+def poll_events() -> None:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: sys.exit()
+
+
+def think() -> None:
+    """
+    Application think function, this function is called every tick
+    """
+    poll_events()
+
+    log('Thinking!')
+    screen.fill(BLACK)
+    pygame.display.flip()
+
 
 def main() -> None:
     """
     Application entrypoint
     """
-    app = QApplication(sys.argv)  # pass argv to pyqt
-    win = Window(w=WIDTH, h=HEIGHT, sw=SCREEN_WIDTH, sh=SCREEN_HEIGHT)
 
-    win.display()
+    while 1:
+        think()
 
-    # I don't really understand this sys.exist app.exec_ line, but it came straight
-    # from the pyqt docs so I trust it
-    sys.exit(app.exec_())
 
 if __name__ == '__main__':
     main()

@@ -5,14 +5,14 @@ Description: Main application development settings file
 """
 
 APP_NAME = 'PyGraph'  # Str of app name for window title
-DEBUG=1  # Puts the app in debug mode (extra logging to console).
-LOG=1  # Puts the app in log mode, (shows success/error messages in console).
+DEBUG = 1  # Puts the app in debug mode (extra logging to console).
+LOG = 1  # Puts the app in log mode, (shows success/error messages in console).
 
-FONT=''  # Checks against system fonts
+BLACK = (0, 0, 0)
 
-VIEWS = [
-	'home',  # Main home app
-	# 'graph',  # Graph interaction
-	# 'save',  # Graph save/load
-	# 'settings'  # App user settings
-]
+# VIEWS = [
+# 	'home',  # Main home app
+# 	# 'graph',  # Graph interaction
+# 	# 'save',  # Graph save/load
+# 	# 'settings'  # App user settings
+# ]

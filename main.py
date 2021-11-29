@@ -4,10 +4,15 @@ Author: Luke Mason
 
 Description: Inits Window object with global screen definition variables.
 """
+
+# Application imports
 from message import log, error, success
 from settings import APP_NAME, COLOR, FONT, FONT_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, WIDTH, HEIGHT, PAD
-from pygame import font, sprite, event, mouse, display, init, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION, QUIT
 from sprites.vertex import Vertex
+
+# Pygame imports
+from pygame import font, sprite, event, mouse, display, init, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION, QUIT,\
+    KEYDOWN, K_BACKSPACE, K_DELETE
 
 import sys
 
@@ -18,6 +23,8 @@ screen = display.set_mode((WIDTH, HEIGHT))
 vertices = sprite.Group()  # pygame list for sprites
 edges = sprite.Group()
 text = []
+
+selected_vertex = None  # Track the selected vertex
 
 
 def add_vertex(x: int, y: int) -> bool:
@@ -33,7 +40,7 @@ def add_vertex(x: int, y: int) -> bool:
             collision = True
 
     if not collision:
-        success('Adding vertex x=%s y=%s' % (x, y))
+        success(f'Adding vertex x={x} y={y}')
         vertices.add(v)
 
     return not collision
@@ -58,6 +65,7 @@ def poll_events() -> None:
     """
     Pygame event polling (Handles any sort of input)
     """
+    global selected_vertex
     moving = False
     x, y = mouse.get_pos()
 
@@ -71,9 +79,18 @@ def poll_events() -> None:
             for v in vertices:
                 if v.rect.collidepoint(x, y):
                     moving = True
-                    v.drag = True
+                    v.selected = v.drag = True
+                    v.set_color(COLOR.get('selected'))
+                    selected_vertex = v
 
-            if not moving: add_vertex(x, y)  # Mousedown not moving, add vertex
+            if not moving:
+                add_vertex(x, y)  # Mousedown not moving, add vertex
+
+            for v in vertices:
+                if v is not selected_vertex:
+                    v.selected = False
+                    v.set_color(COLOR.get('white'))
+
 
         elif e.type == MOUSEBUTTONUP:
             # If mousedown and vertex is being dragged, stop dragging (new vertex position)
@@ -84,6 +101,16 @@ def poll_events() -> None:
             for v in vertices:
                 if v.drag:
                     v.set_pos(x, y)
+
+        elif e.type == KEYDOWN:
+
+            if e.key == K_BACKSPACE or e.key == K_DELETE:
+                x, y = selected_vertex.get_pos()
+                n = len(vertices)
+                vertices.remove(selected_vertex)
+
+                if len(vertices) < n:
+                    success(f'Removed vertex x={x} y={y}')
 
 
 def think(_font: font.SysFont) -> None:

@@ -17,6 +17,7 @@ class Vertex(Sprite):
 		Sprite.__init__(self)
 
 		self.drag = False  # Drag state for the vertex (will be true when vertex is being moved)
+		self.selected = False
 		self.color = color
 		self.radius = radius
 
@@ -40,3 +41,10 @@ class Vertex(Sprite):
 		Returns vertex position
 		"""
 		return self.rect.x, self.rect.y
+
+	def set_color(self, color: (int, int, int)) -> None:
+		"""
+		Sets the vertex color
+		"""
+		self.color = color
+		self.image.fill(self.color)

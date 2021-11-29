@@ -5,36 +5,70 @@ Author: Luke Mason
 Description: Inits Window object with global screen definition variables.
 """
 from message import log, error, success
-from settings import APP_NAME, BLACK
+from settings import APP_NAME, BLACK, WHITE
+from pygame import sprite, event, mouse, display, init, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION, QUIT
+from sprites.vertex import Vertex
 
-import sys, pygame
-pygame.init()
+import sys
+
+init()  # pygame.init()
 
 SCREEN_WIDTH: int = 1920
 SCREEN_HEIGHT: int = 1080
 WIDTH: int = 800
 HEIGHT: int = 900
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = display.set_mode((WIDTH, HEIGHT))
+
+vertices = sprite.Group()  # pygame list for sprites
 
 
-def add_vertex(x: int, y: int) -> None:
-    success('Adding vertex x=%s y=%s' % (x, y))
+def add_vertex(x: int, y: int) -> bool:
+    """
+    Attempts to add a new vertex, returns True if successful, False if it is colliding with an existing vertex.
+    """
+    v = Vertex(x=x, y=y)
+
+    collision = False
+    for _v in vertices:
+        if sprite.collide_rect(v, _v):
+            error("Vertex placement collision detected!")
+            collision = True
+
+    if not collision:
+        success('Adding vertex x=%s y=%s' % (x, y))
+        vertices.add(v)
+
+    return not collision
 
 
 def poll_events() -> None:
     """
-    Main event polling
+    Pygame event polling (Handles any sort of input)
     """
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+    x, y = mouse.get_pos()
+
+    for e in event.get():
+        if e.type == QUIT:
             error("PyGame quitting.")
 
             sys.exit()
-        elif event.type == pygame.MOUSEBUTTONUP:
-            x, y = pygame.mouse.get_pos()
+        elif e.type == MOUSEBUTTONDOWN:
+            # Handles vertex move
+            for v in vertices:
+                if v.rect.collidepoint(x, y): v.drag = True
 
-            success("PyGame click! x=%s y=%s" % (x, y))
+            add_vertex(x, y)
+
+        elif e.type == MOUSEBUTTONUP:
+            # If mousedown and vertex is being dragged, stop dragging (new vertex position)
+            for v in vertices:
+                if v.drag: v.drag = False
+
+        elif e.type == MOUSEMOTION:
+            for v in vertices:
+                if v.drag:
+                    v.set_pos(x, y)
 
 
 def think() -> None:
@@ -43,9 +77,10 @@ def think() -> None:
     """
     poll_events()
 
-    # log('Thinking!')
     screen.fill(BLACK)
-    pygame.display.flip()
+    vertices.draw(screen)
+
+    display.flip()
 
 
 def main() -> None:

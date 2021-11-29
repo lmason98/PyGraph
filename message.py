@@ -1,6 +1,7 @@
 """
 File: message.py
 Author: Luke Mason
+
 Description: Console output functions
 """
 from settings import DEBUG, LOG

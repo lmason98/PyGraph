@@ -1,6 +1,7 @@
 """
-File: views/settings.py
+File: settings.py
 Author: Luke Mason
+
 Description: Main application development settings file
 """
 

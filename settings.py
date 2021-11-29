@@ -31,3 +31,5 @@ FONT_SIZE = 25
 # 	# 'save',  # Graph save/load
 # 	# 'settings'  # App user settings
 # ]
+
+_QUIT = -2

@@ -8,6 +8,7 @@ from settings import COLOR
 from pygame.sprite import Sprite
 from pygame import Surface, draw
 
+
 class Vertex(Sprite):
 
 	def __init__(self, x: int, y: int, color: (int, int, int) = COLOR.get('white'), radius: int = 10) -> None:

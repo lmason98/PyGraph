@@ -19,7 +19,7 @@ LOG = 1  # Puts the app in log mode, (shows success/error messages in console).
 COLOR = {
 	'black': (0, 0, 0),
 	'white': (255, 255, 255),
-	'selected': (168, 255, 168)
+	'focus': (255, 25, 133)
 }
 
 FONT = 'Dubai'

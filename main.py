@@ -9,7 +9,7 @@ Description: Inits Window object with global screen definition variables.
 from message import log, error, success
 from settings import APP_NAME, COLOR, FONT, FONT_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, WIDTH, HEIGHT, PAD, _QUIT
 from sprites.vertex import Vertex
-from pages.graph import Graph
+from pages.graph import GraphPage
 
 # Pygame imports
 from pygame import font, display, init, time
@@ -30,7 +30,7 @@ def main() -> None:
     clock = time.Clock()
     tick = 0
 
-    graph = Graph(screen=screen)
+    graph = GraphPage(screen=screen)
 
     while 1:
         q = graph.think(sc_font)

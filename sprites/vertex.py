@@ -24,6 +24,7 @@ class Vertex(Sprite):
 		self.color = color
 		self.radius = radius
 
+		self.edges = []
 		self.connected_vertices = []
 
 		# TODO: Figure out how to draw a circle

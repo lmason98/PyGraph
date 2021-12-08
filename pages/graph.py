@@ -16,6 +16,9 @@ from graph import Graph as G
 from pygame import draw, sprite, event, mouse, display, init, key, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION, QUIT, \
 	KEYDOWN, K_BACKSPACE, K_DELETE, KMOD_SHIFT
 
+# Python imports
+from math import atan2, degrees, cos, sin
+
 
 class GraphPage(Page):
 
@@ -75,7 +78,21 @@ class GraphPage(Page):
 			self.edges.append({'edge': e, 'count': 1})
 			# log(f'{e} insert count=1')
 
+		v1.edges.append(e)
+		v2.edges.append(e)
+
 		success(f'Add edge {e}')
+
+	def edge_count(self):
+		"""
+		Since self.edges is a list of dicts defining parallel edges, simply
+		len(self.edges) is misleading.
+		"""
+		total_count = 0
+
+		for edge in self.edges: total_count += edge.get('count')
+
+		return total_count
 
 	def remove_edge(self, edge) -> bool:
 		"""
@@ -97,6 +114,11 @@ class GraphPage(Page):
 			n = len(self.vertices)
 			self.vertices.remove(sv)
 
+			# Remove any edges connected to this removed vertex
+			for e in self.edges:
+				if e.get('edge') in sv.edges:
+					self.edges.remove(e)
+
 			if len(self.vertices) < n:
 				success(f'Removed vertex x={x} y={y}')
 
@@ -106,7 +128,7 @@ class GraphPage(Page):
 		"""
 
 		v_count = f'N={len(self.vertices)}'  # N
-		e_count = f'M={len(self.edges)}'  # M
+		e_count = f'M={self.edge_count()}'  # M
 
 		v_count_rendered = font.render(str(v_count), False, COLOR.get('white'), True)
 		e_count_rendered = font.render(str(e_count), False, COLOR.get('white'), True)
@@ -114,16 +136,18 @@ class GraphPage(Page):
 		return {'text': v_count_rendered, 'size': font.size(str(v_count))}, \
 			   {'text': e_count_rendered, 'size': font.size(str(e_count))}
 
-	def handle_vertex_click(self, x: int, y: int):
+	def handle_click(self, x, y):
 		"""
-		Handles the logic when a vertex is clicked, this logic is quite complex as it includes,
+		Handles the logic when mouse is clicked, this logic is quite complex as it includes,
 		- placing a vertex (single click anywhere on app window where there does not already exist a vertex)
 		- moving a vertex (click and drag a vertex)
 		- adding an edge between two vertices (single click two vertices in a row)
 		"""
+		self.collision = False
 
 		for v in self.vertices:
 			if v.rect.collidepoint(x, y):
+				self.collision = True
 
 				log('====== vertex click:', v)
 
@@ -146,10 +170,13 @@ class GraphPage(Page):
 					self.last_clicked_vertex = v
 					log('set last clicked')
 
-		if not self.moving:
+		# If selected vertex and not a collision, clear selected vertex
+		if not self.collision and len(self.selected_vertices) > 0:
+			self.selected_vertices.clear()
+		# Otherwise add new vertex
+		elif not self.collision:
 			self.add_vertex(x, y)  # Mousedown not moving, add vertex
 			self.last_clicked_vertex = None
-			log('clear last clicked 3')
 
 	def poll_events(self):
 		"""
@@ -159,23 +186,26 @@ class GraphPage(Page):
 		- Delete or backspace to delete selected vertex
 		"""
 		x, y = mouse.get_pos()
-		# double_click = False
 
 		for e in event.get():
 
 			if e.type == QUIT:
 				return _QUIT
 
+			# Mouse down
 			elif e.type == MOUSEBUTTONDOWN:
 
-				self.handle_vertex_click(x, y)
+				self.handle_click(x, y)
 
+			# Mouse up
 			elif e.type == MOUSEBUTTONUP:
 				# If mouse release and vertex is being dragged, stop dragging (placing a moved vertex)
 				for v in self.vertices:
 					if v.drag:
 						v.drag = False
+						self.moving = False
 
+			# Mouse moving
 			elif e.type == MOUSEMOTION:
 
 				for v in self.vertices:
@@ -192,25 +222,57 @@ class GraphPage(Page):
 
 			elif e.type == KEYDOWN:
 
-				# Delete selected vertices
+				# (Delete or backspace key) Delete selected vertices
 				if e.key == K_BACKSPACE or e.key == K_DELETE:
 					self.delete_vertices()
 					self.moving = False
 
-	def draw_edges(self) -> None:
+	def draw_edges(self):
 		"""
 		Draw the edges (have to do this manually as pygame sprite did not quite fit for this use case)
 		"""
+		mult = 4  # distance between edges
+
 		for e in self.edges:
 			total_count = e.get('count')
 			for c in range(0, e.get('count')):
 				edge = e.get('edge')
 				p1, p2 = edge.v1.get_pos(), edge.v2.get_pos()
 
-				p1 = (p1[0] + edge.v1.radius + 2*c, p1[1] + edge.v1.radius + 2*c)
-				p2 = (p2[0] + edge.v2.radius + 2*c, p2[1] + edge.v2.radius + 2*c)
+				ang = degrees(atan2(p2[1] - p1[1], p2[0] - p1[0]))
+
+				# Logic to place parallel edges in clear visible manner despite angle between
+				# the vertices. (This angle will change as user moves vertices around)
+				x_mult, y_mult = self.handle_point_angle_eq(ang, mult)
+
+				p1 = (p1[0] + edge.v1.radius + x_mult*c, p1[1] + edge.v1.radius + y_mult*c)
+				p2 = (p2[0] + edge.v2.radius + x_mult*c, p2[1] + edge.v2.radius + y_mult*c)
 
 				draw.line(self.screen, edge.color, p1, p2)
+
+	def handle_point_angle_eq(self, ang, dist) -> (int, int):
+		"""
+		Handles the angle point code to keep draw_edges function clean
+
+		It returns x, y multiple for distance between parallel edges based on the
+		angle between the vertices so that parallel edges can always be displayed
+		as parallel.
+		"""
+
+		# Handles sign of ranges we check to reduce repeated code
+		sign = 1
+		if ang < 0:
+			sign = -1
+
+		# This algorithm is likely really ugly... I know there exists a more elegant way
+		# to do this.
+		if 45 <= ang <= 135 or -135 <= ang <= -45:
+			return dist, 0
+		elif -45 <= ang <= 45 or ang >= 135 or ang <= -135:
+			return 0, dist
+		else:
+			print('======== other ang?')
+			return dist, dist
 
 	def think(self, font):
 		"""

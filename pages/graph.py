@@ -220,6 +220,9 @@ class GraphPage(Page):
 					elif v not in self.selected_vertices:
 						v.set_color(COLOR.get('white'))
 
+				for e in self.edges:
+
+
 			elif e.type == KEYDOWN:
 
 				# (Delete or backspace key) Delete selected vertices
@@ -231,7 +234,7 @@ class GraphPage(Page):
 		"""
 		Draw the edges (have to do this manually as pygame sprite did not quite fit for this use case)
 		"""
-		mult = 4  # distance between edges
+		mult = 6  # distance between edges
 
 		for e in self.edges:
 			total_count = e.get('count')

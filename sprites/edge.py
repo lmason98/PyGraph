@@ -51,7 +51,7 @@ class Edge(Sprite):
 		"""
 		self.color = color
 
-	def edge_hovered(self, x: int, y: int) -> bool:
+	def hovered(self, x: int, y: int) -> bool:
 		"""
 		Logic to handle whether an edge is currently being hovered.
 		This was my reference for the logic: https://stackoverflow.com/questions/17692922/check-is-a-point-x-y-is-between-two-points-drawn-on-a-straight-line
@@ -61,8 +61,13 @@ class Edge(Sprite):
 		b = self.v2.get_pos()
 		c = (x, y)
 
-		if self.dist(A, B) == (self.dist(A, C) + self.dist(B, C)):
-            on_edge = True
+		print('======== dist(a, b)=%s dist(a, c)=%s dist(b, c)=%s dist(a,c)+dist(b,c)=%s' % (self.dist(a, b), self.dist(a,c), self.dist(b,c), self.dist(a,c)+self.dist(b,c)))
+
+		ab = self.dist(a,b)
+		grace_range = [ab-0.1, ab, ab+0.1]  # Create a buffer range around edge to be selected
+
+		if self.dist(a, c) + self.dist(b, c) in grace_range:
+			on_edge = True
 		else:
 			on_edge = False
 
@@ -73,4 +78,4 @@ class Edge(Sprite):
 		"""
 		Find the distance between two (x, y) points
 		"""
-		return round(sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2), 2)  # Round to the second place
+		return round(sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2), 1)  # Round to the second place

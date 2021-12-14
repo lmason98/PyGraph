@@ -23,14 +23,13 @@ from math import atan2, degrees, cos, sin
 class GraphPage(Page):
 
 	def __init__(self, screen):
-		Page.__init__(self)
-
-		self.screen = screen  # Main pygame screen
+		Page.__init__(self, screen)
 
 		self.second_click = False
 		self.moving = False
 		self.collision = False
 		self.selected_vertices = []
+		self.selected_edges = []
 		self.vertices = sprite.Group()
 		self.edges = []  # Edges arent sprites in the same way that vertices are
 		self.last_clicked_vertex = None
@@ -111,7 +110,6 @@ class GraphPage(Page):
 		for sv in self.selected_vertices:
 			log('deleting sv :', sv)
 			x, y = sv.get_pos()
-			n = len(self.vertices)
 			self.vertices.remove(sv)
 
 			# Remove any edges connected to this removed vertex
@@ -119,8 +117,12 @@ class GraphPage(Page):
 				if e.get('edge') in sv.edges:
 					self.edges.remove(e)
 
-			if len(self.vertices) < n:
-				success(f'Removed vertex x={x} y={y}')
+	def delete_edges(self):
+		for se in self.selected_edges:
+			for e in self.edges:
+				if e.get('edge') == se:
+					log('deleteing se:', se)
+					self.edges.remove(e)
 
 	def stats(self, font):
 		"""
@@ -166,6 +168,8 @@ class GraphPage(Page):
 					self.add_edge(self.last_clicked_vertex, v)
 					self.last_clicked_vertex = None
 					log('clear last clicked 1')
+				elif self.last_clicked_vertex and v and self.last_clicked_vertex == v:
+					log('ADD LOOP!')
 				else:
 					self.last_clicked_vertex = v
 					log('set last clicked')
@@ -177,6 +181,12 @@ class GraphPage(Page):
 		elif not self.collision:
 			self.add_vertex(x, y)  # Mousedown not moving, add vertex
 			self.last_clicked_vertex = None
+
+		for e in self.edges:
+			edge = e.get('edge')
+			if edge.hovered(x, y):
+				self.selected_edges.clear()
+				self.selected_edges.append(edge)
 
 	def poll_events(self):
 		"""
@@ -220,7 +230,12 @@ class GraphPage(Page):
 					elif v not in self.selected_vertices:
 						v.set_color(COLOR.get('white'))
 
-				for e in self.edges:
+				for _e in self.edges:
+					edge = _e.get('edge')
+					if edge.hovered(x, y):
+						edge.set_color(COLOR.get('focus'))
+					elif edge not in self.selected_edges:
+						edge.set_color(COLOR.get('white'))
 
 
 			elif e.type == KEYDOWN:
@@ -228,6 +243,7 @@ class GraphPage(Page):
 				# (Delete or backspace key) Delete selected vertices
 				if e.key == K_BACKSPACE or e.key == K_DELETE:
 					self.delete_vertices()
+					self.delete_edges()
 					self.moving = False
 
 	def draw_edges(self):
@@ -288,6 +304,7 @@ class GraphPage(Page):
 		self.screen.fill(COLOR.get('black'))  # Background color
 		self.vertices.draw(self.screen)  # Draw vertices
 		self.draw_edges()  # Draw edges
+		self.draw_buttons()  # Draw buttons (inherited from Page class)
 
 		self.screen.blit(n.get('text'), (PAD, PAD))  # Draw N=vertex count and M=edge count
 		self.screen.blit(m.get('text'), (WIDTH - PAD - m.get('size')[0], PAD))  # Set to right side of screen

@@ -30,7 +30,11 @@ def main() -> None:
     clock = time.Clock()
     tick = 0
 
+    def blah():
+        print('foo')
+
     graph = GraphPage(screen=screen)
+    graph.add_button(PAD, HEIGHT - 35 - PAD, 'blah', blah)
 
     while 1:
         q = graph.think(sc_font)

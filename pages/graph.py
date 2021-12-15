@@ -117,6 +117,8 @@ class GraphPage(Page):
 			for e in self.edges:
 				if e.get('edge') in sv.edges:
 					self.edges.remove(e)
+					
+		self.last_clicked_vertex = None
 
 	def delete_edges(self):
 		for se in self.selected_edges:
@@ -149,14 +151,20 @@ class GraphPage(Page):
 		self.collision = False
 
 		button_clicked = False
+		edge_clicked = False
 		for b in self.buttons:
 			if b.hovered(x, y):
 				log(f'button clicked={b}')
 				b.onclick()
 				button_clicked = True
 
-
 		if not button_clicked:
+			for e in self.edges:
+				edge = e.get('edge')
+				if edge.hovered(x, y):
+					edge_clicked = True
+
+		if not button_clicked and not edge_clicked:
 			for v in self.vertices:
 				if v.rect.collidepoint(x, y):
 					self.collision = True
@@ -171,6 +179,7 @@ class GraphPage(Page):
 					v.selected = True
 					v.set_color(COLOR.get('focus'))
 					self.selected_vertices.clear()
+					self.selected_edges.clear()
 					self.selected_vertices.append(v)
 
 					# If last clicked vertex
@@ -187,16 +196,13 @@ class GraphPage(Page):
 			# If selected vertex and not a collision, clear selected vertex
 			if not self.collision and len(self.selected_vertices) > 0:
 				self.selected_vertices.clear()
+			# If selected edge and not a collision, clear selected edge
+			elif not self.collision and len(self.selected_edges) > 0:
+				self.selected_edges.clear()
 			# Otherwise add new vertex
 			elif not self.collision:
 				self.add_vertex(x, y)  # Mousedown not moving, add vertex
 				self.last_clicked_vertex = None
-
-			for e in self.edges:
-				edge = e.get('edge')
-				if edge.hovered(x, y):
-					self.selected_edges.clear()
-					self.selected_edges.append(edge)
 
 	def poll_events(self):
 		"""
@@ -220,10 +226,25 @@ class GraphPage(Page):
 			# Mouse up
 			elif e.type == MOUSEBUTTONUP:
 				# If mouse release and vertex is being dragged, stop dragging (placing a moved vertex)
+				dragging = False
 				for v in self.vertices:
 					if v.drag:
+						dragging = True
 						v.drag = False
 						self.moving = False
+
+					if v.rect.collidepoint(x, y) and self.last_clicked_vertex and v and self.last_clicked_vertex != v:
+						self.add_edge(self.last_clicked_vertex, v)
+
+
+				# Handling edge placement on mouse button up, so we do not place an edge when draggin a vertex
+				if not dragging:
+					for e in self.edges:
+						edge = e.get('edge')
+						if edge.hovered(x, y):
+							self.selected_edges.clear()
+							self.selected_vertices.clear()
+							self.selected_edges.append(edge)
 
 			# Mouse moving
 			elif e.type == MOUSEMOTION:

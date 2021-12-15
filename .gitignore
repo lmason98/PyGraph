@@ -1,3 +1,9 @@
-.pygraph_env/
+# jetbrains
 .idea/
+
+# python
+.pygraph_env/
 __pycache__/
+
+# git
+.git/

@@ -22,7 +22,7 @@ COLOR = {
 	'focus': (255, 25, 133)
 }
 
-FONT = 'Dubai'
+FONT = 'Calibri'
 FONT_SIZE = 25
 
 # VIEWS = [

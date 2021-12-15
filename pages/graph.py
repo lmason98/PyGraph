@@ -33,6 +33,7 @@ class GraphPage(Page):
 		self.vertices = sprite.Group()
 		self.edges = []  # Edges arent sprites in the same way that vertices are
 		self.last_clicked_vertex = None
+		self.show_labels = False
 
 		self.graph = G()  # Actual graph logic
 
@@ -147,46 +148,55 @@ class GraphPage(Page):
 		"""
 		self.collision = False
 
-		for v in self.vertices:
-			if v.rect.collidepoint(x, y):
-				self.collision = True
+		button_clicked = False
+		for b in self.buttons:
+			if b.hovered(x, y):
+				log(f'button clicked={b}')
+				b.onclick()
+				button_clicked = True
 
-				log('====== vertex click:', v)
 
-				# Handles vertex move (self.moving and v.drag flipped on MOUSEBUTTONUP)
-				self.moving = True
-				v.drag = True
+		if not button_clicked:
+			for v in self.vertices:
+				if v.rect.collidepoint(x, y):
+					self.collision = True
 
-				# Click to select
-				v.selected = True
-				v.set_color(COLOR.get('focus'))
+					log('====== vertex click:', v)
+
+					# Handles vertex move (self.moving and v.drag flipped on MOUSEBUTTONUP)
+					self.moving = True
+					v.drag = True
+
+					# Click to select
+					v.selected = True
+					v.set_color(COLOR.get('focus'))
+					self.selected_vertices.clear()
+					self.selected_vertices.append(v)
+
+					# If last clicked vertex
+					if self.last_clicked_vertex and v and self.last_clicked_vertex != v:
+						self.add_edge(self.last_clicked_vertex, v)
+						self.last_clicked_vertex = None
+						log('clear last clicked 1')
+					elif self.last_clicked_vertex and v and self.last_clicked_vertex == v:
+						log('ADD LOOP!')
+					else:
+						self.last_clicked_vertex = v
+						log('set last clicked')
+
+			# If selected vertex and not a collision, clear selected vertex
+			if not self.collision and len(self.selected_vertices) > 0:
 				self.selected_vertices.clear()
-				self.selected_vertices.append(v)
+			# Otherwise add new vertex
+			elif not self.collision:
+				self.add_vertex(x, y)  # Mousedown not moving, add vertex
+				self.last_clicked_vertex = None
 
-				# If last clicked vertex
-				if self.last_clicked_vertex and v and self.last_clicked_vertex != v:
-					self.add_edge(self.last_clicked_vertex, v)
-					self.last_clicked_vertex = None
-					log('clear last clicked 1')
-				elif self.last_clicked_vertex and v and self.last_clicked_vertex == v:
-					log('ADD LOOP!')
-				else:
-					self.last_clicked_vertex = v
-					log('set last clicked')
-
-		# If selected vertex and not a collision, clear selected vertex
-		if not self.collision and len(self.selected_vertices) > 0:
-			self.selected_vertices.clear()
-		# Otherwise add new vertex
-		elif not self.collision:
-			self.add_vertex(x, y)  # Mousedown not moving, add vertex
-			self.last_clicked_vertex = None
-
-		for e in self.edges:
-			edge = e.get('edge')
-			if edge.hovered(x, y):
-				self.selected_edges.clear()
-				self.selected_edges.append(edge)
+			for e in self.edges:
+				edge = e.get('edge')
+				if edge.hovered(x, y):
+					self.selected_edges.clear()
+					self.selected_edges.append(edge)
 
 	def poll_events(self):
 		"""
@@ -293,6 +303,26 @@ class GraphPage(Page):
 			print('======== other ang?')
 			return dist, dist
 
+	def toggle_labels(self):
+		print('======== toggling labels')
+		self.show_labels = not self.show_labels
+
+	def draw_vertices(self, font):
+		"""
+		Draws the vertices and handles vertex labels
+		"""
+		self.vertices.draw(self.screen)  # Draw vertices
+
+		if self.show_labels:
+			i = 1
+			for v in self.vertices:
+				x, y = v.get_pos()
+
+				text = font.render(str(i), False, COLOR.get('white'), True)
+				self.screen.blit(text, (x + PAD*1.5, y - PAD*1.5))
+
+				i += 1
+
 	def think(self, font):
 		"""
 		Graph page think function, this function is called every tick
@@ -302,9 +332,9 @@ class GraphPage(Page):
 		n, m = self.stats(font)  # n, m are dicts, take a look at render_stats to see structure
 
 		self.screen.fill(COLOR.get('black'))  # Background color
-		self.vertices.draw(self.screen)  # Draw vertices
+		self.draw_vertices(font)
 		self.draw_edges()  # Draw edges
-		self.draw_buttons()  # Draw buttons (inherited from Page class)
+		self.draw_buttons(font)  # Draw buttons (inherited from Page class)
 
 		self.screen.blit(n.get('text'), (PAD, PAD))  # Draw N=vertex count and M=edge count
 		self.screen.blit(m.get('text'), (WIDTH - PAD - m.get('size')[0], PAD))  # Set to right side of screen

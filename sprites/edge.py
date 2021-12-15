@@ -61,8 +61,6 @@ class Edge(Sprite):
 		b = self.v2.get_pos()
 		c = (x, y)
 
-		print('======== dist(a, b)=%s dist(a, c)=%s dist(b, c)=%s dist(a,c)+dist(b,c)=%s' % (self.dist(a, b), self.dist(a,c), self.dist(b,c), self.dist(a,c)+self.dist(b,c)))
-
 		ab = self.dist(a,b)
 		grace_range = [ab-0.1, ab, ab+0.1]  # Create a buffer range around edge to be selected
 
